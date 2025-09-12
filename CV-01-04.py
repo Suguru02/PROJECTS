@@ -1,26 +1,28 @@
-import numpy as np
 import cv2 as cv
 from matplotlib import pyplot as plt
 import os
 
 def load_image(filename):
-    """Загрузка и проверка изображения"""
+    """Загрузка и проверка цветного изображения"""
     if not os.path.exists(filename):
         print(f"Ошибка: Файл '{filename}' не найден!")
         return None
     
-    img = cv.imread(filename, 0)
+    # Загружаем цветное изображение 
+    img = cv.imread(filename, cv.IMREAD_COLOR)
     
     if img is None:
         print(f"Ошибка: Не удалось загрузить изображение '{filename}'!")
         print("Проверьте, что файл является корректным изображением.")
         return None
     
-    return img
+    # Конвертируем из BGR в RGB
+    img_rgb = cv.cvtColor(img, cv.COLOR_BGR2RGB)
+    return img_rgb
 
 def rotate_image(img, angle):
     """Поворот изображения на заданный угол"""
-    rows, cols = img.shape
+    rows, cols = img.shape[:2]
     size = 1
     return cv.warpAffine(img, cv.getRotationMatrix2D((cols/2, rows/2), angle, size), (cols, rows))
 
@@ -44,39 +46,39 @@ def display_images(original, rotations, flips):
 
     # Original image
     plt.subplot(231)
-    plt.imshow(original, cmap='gray')
+    plt.imshow(original)
     plt.title('Original Image')
     plt.xticks([])
     plt.yticks([])
 
     # Rotated images
     plt.subplot(232)
-    plt.imshow(rotations['rotation30'], cmap='gray')
+    plt.imshow(rotations['rotation30'])
     plt.title('Rotation 30')
     plt.xticks([])
     plt.yticks([])
 
     plt.subplot(233)
-    plt.imshow(rotations['rotation60'], cmap='gray')
+    plt.imshow(rotations['rotation60'])
     plt.title('Rotation 60')
     plt.xticks([])
     plt.yticks([])
 
     plt.subplot(234)
-    plt.imshow(rotations['rotation90'], cmap='gray')
+    plt.imshow(rotations['rotation90'])
     plt.title('Rotation 90')
     plt.xticks([])
     plt.yticks([])
 
     # Flipped images
     plt.subplot(235)
-    plt.imshow(flips[0], cmap='gray')
+    plt.imshow(flips[0])
     plt.title('Horizontal Flip')
     plt.xticks([])
     plt.yticks([])
 
     plt.subplot(236)
-    plt.imshow(flips[1], cmap='gray')
+    plt.imshow(flips[1])
     plt.title('Vertical Flip')
     plt.xticks([])
     plt.yticks([])
@@ -85,14 +87,16 @@ def display_images(original, rotations, flips):
     plt.show()
 
 def save_images(images, base_filename):
-    """Сохранение всех изображений в папку output"""
+    """Сохранение всех цветных изображений в папку output"""
     output_dir = 'output'
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     
     for image_name, image_data in images.items():
         filename = f'{output_dir}/{base_filename}_{image_name}.jpg'
-        cv.imwrite(filename, image_data)
+        # Конвертируем обратно из RGB в BGR для сохранения через OpenCV
+        image_bgr = cv.cvtColor(image_data, cv.COLOR_RGB2BGR)
+        cv.imwrite(filename, image_bgr)
 
 def main():
     """Основная функция: чтение и запись файлов"""
