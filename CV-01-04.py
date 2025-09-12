@@ -3,92 +3,126 @@ import cv2 as cv
 from matplotlib import pyplot as plt
 import os
 
-def main():
-
-    # Получаем имя файла
-    filename = input("Введите имя файла изображения (например, image.jpg): ").strip()
-    
-    # Проверяем есть ли такой файл
+def load_image(filename):
+    """Загрузка и проверка изображения"""
     if not os.path.exists(filename):
         print(f"Ошибка: Файл '{filename}' не найден!")
-        return
-
-
-    img = cv.imread(filename, 0) # загружаем картинку
-
-    # Проверяем загрузилось ли изображение
+        return None
+    
+    img = cv.imread(filename, 0)
+    
     if img is None:
         print(f"Ошибка: Не удалось загрузить изображение '{filename}'!")
         print("Проверьте, что файл является корректным изображением.")
-        return
+        return None
+    
+    return img
 
-
+def rotate_image(img, angle):
+    """Поворот изображения на заданный угол"""
     rows, cols = img.shape
-    # Поворачиваем на 30 60 90
-    M = np.float32([[1,  0, 0], [0, -1, rows], [0,  0, 1]])
-    img_rotation30 = cv.warpAffine(img, cv.getRotationMatrix2D((cols/2, rows/2), 30, 1), (cols, rows))
-    img_rotation60 = cv.warpAffine(img, cv.getRotationMatrix2D((cols/2, rows/2), 60, 1), (cols, rows))
-    img_rotation90 = cv.warpAffine(img, cv.getRotationMatrix2D((cols/2, rows/2), 90, 1), (cols, rows))
+    size = 1
+    return cv.warpAffine(img, cv.getRotationMatrix2D((cols/2, rows/2), angle, size), (cols, rows))
 
-    # Отражаем по горизонтали и вертикали
-    img_flip_gor = cv.flip(img, 1)
-    img_flip_vert = cv.flip(img, 0)
+def flip_image(img):
+    """Отражение изображения по горизонтали и вертикали"""
+    flip_horizontal = cv.flip(img, 1) # 1 - по горизонтали
+    flip_vertical = cv.flip(img, 0)   # 0 - по вертикали
+    return flip_horizontal, flip_vertical
 
-    # Делаем сетку и помещаем туда оригинал и повернутые изображения
+def create_rotations(img):
+    """Создание повернутых версий изображения"""
+    return {
+        'rotation30': rotate_image(img, 30),
+        'rotation60': rotate_image(img, 60),
+        'rotation90': rotate_image(img, 90)
+    }
+
+def display_images(original, rotations, flips):
+    """Отображение всех изображений в сетке"""
     plt.figure(figsize=(12, 8))
 
+    # Original image
     plt.subplot(231)
-    plt.imshow(img, cmap='gray')
+    plt.imshow(original, cmap='gray')
     plt.title('Original Image')
     plt.xticks([])
     plt.yticks([])
 
+    # Rotated images
     plt.subplot(232)
-    plt.imshow(img_rotation30, cmap='gray')
-    plt.title('Rotation30 Image')
+    plt.imshow(rotations['rotation30'], cmap='gray')
+    plt.title('Rotation 30')
     plt.xticks([])
     plt.yticks([])
 
     plt.subplot(233)
-    plt.imshow(img_rotation60, cmap='gray')
-    plt.title('Rotation60 Image')
+    plt.imshow(rotations['rotation60'], cmap='gray')
+    plt.title('Rotation 60')
     plt.xticks([])
     plt.yticks([])
 
     plt.subplot(234)
-    plt.imshow(img_rotation90, cmap='gray')
-    plt.title('Rotation90 Image')
+    plt.imshow(rotations['rotation90'], cmap='gray')
+    plt.title('Rotation 90')
     plt.xticks([])
     plt.yticks([])
 
+    # Flipped images
     plt.subplot(235)
-    plt.imshow(img_flip_gor, cmap='gray')
-    plt.title('Flip_gorizontal Image')
+    plt.imshow(flips[0], cmap='gray')
+    plt.title('Horizontal Flip')
     plt.xticks([])
     plt.yticks([])
 
     plt.subplot(236)
-    plt.imshow(img_flip_vert, cmap='gray')
-    plt.title('Flip_vertikal Image')
+    plt.imshow(flips[1], cmap='gray')
+    plt.title('Vertical Flip')
     plt.xticks([])
     plt.yticks([])
 
     plt.tight_layout()
     plt.show()
-    
-    # Создаем папку для выходных файлов, если её нет
+
+def save_images(images, base_filename):
+    """Сохранение всех изображений в папку output"""
     output_dir = 'output'
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     
-    # Сохраняем преобразованные изображения
-    base_name = os.path.splitext(os.path.basename(filename))[0]
-    
-    cv.imwrite(f'{output_dir}/{base_name}_rotation30.jpg', img_rotation30)
-    cv.imwrite(f'{output_dir}/{base_name}_rotation60.jpg', img_rotation60)
-    cv.imwrite(f'{output_dir}/{base_name}_rotation90.jpg', img_rotation90)
-    cv.imwrite(f'{output_dir}/{base_name}_flip_horizontal.jpg', img_flip_gor)
-    cv.imwrite(f'{output_dir}/{base_name}_flip_vertical.jpg', img_flip_vert)
+    for image_name, image_data in images.items():
+        filename = f'{output_dir}/{base_filename}_{image_name}.jpg'
+        cv.imwrite(filename, image_data)
 
+def main():
+    """Основная функция: чтение и запись файлов"""
+    # Чтение файла
+    filename = input("Введите имя файла изображения (например, image.jpg): ").strip()
+    img = load_image(filename)
+    
+    if img is None:
+        return
+        
+    # Создание преобразованных изображений
+    rotations = create_rotations(img)
+    flip_horizontal, flip_vertical = flip_image(img)
+    
+    # Отображение
+    display_images(img, rotations, (flip_horizontal, flip_vertical))
+    
+    # Подготовка данных для сохранения
+    all_images = {
+        'original': img,
+        'rotation30': rotations['rotation30'],
+        'rotation60': rotations['rotation60'],
+        'rotation90': rotations['rotation90'],
+        'flip_horizontal': flip_horizontal,
+        'flip_vertical': flip_vertical
+    }
+    
+    # Запись файлов
+    name = os.path.splitext(os.path.basename(filename))[0]
+    save_images(all_images, name)
+    
 if __name__ == "__main__":
     main()
