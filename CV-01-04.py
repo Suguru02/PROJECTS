@@ -99,7 +99,7 @@ def save_images(images, base_filename):
         cv.imwrite(filename, image_bgr)
 
 def main():
-    """Основная функция: чтение и запись файлов"""
+    """Основная функция: чтение, вызов функций и запись файлов"""
     # Чтение файла
     filename = input("Введите имя файла изображения (например, image.jpg): ").strip()
     img = load_image(filename)
