@@ -10,7 +10,9 @@
 - Сохранить все варианты изображений.
 
 ## Используемые библиотеки
-- opencv-python, numpy, matplotlib.
+- opencv-python;
+- numpy;
+- matplotlib.
 
 ## Функциональность
 
